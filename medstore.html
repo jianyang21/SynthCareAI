@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Local MedStore – Demo (500 items)</title>
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --muted:#94a3b8; --brand:#22c55e; --danger:#ef4444; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:linear-gradient(120deg,#0b1223,#0f172a 40%,#0b1223);color:#e5e7eb}
+    header{position:sticky;top:0;z-index:20;background:#0b1223d9;backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
+    .container{max-width:1200px;margin:0 auto;padding:16px}
+    .flex{display:flex;gap:12px;align-items:center;}
+    .grow{flex:1}
+    .search{width:100%;padding:12px 14px;border-radius:999px;border:1px solid #374151;background:#0b1223;color:#e5e7eb}
+    .search::placeholder{color:#64748b}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid #374151;background:#0b1223;color:#e5e7eb;cursor:pointer;}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:none;color:#06120a;font-weight:700}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:12px}
+    .card{background:#0b1223;border:1px solid #1f2937;border-radius:16px;padding:14px;box-shadow:0 4px 24px #0000005a}
+    .card h3{margin:6px 0 2px;font-size:16px;line-height:1.2}
+    .pill{font-size:12px;color:#cbd5e1}
+    .price{margin-top:6px;font-weight:700;color:#a7f3d0}
+    .muted{color:#94a3b8}
+    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}
+    .hidden{display:none}
+
+    /* Modals / drawers */
+    .modal-backdrop{position:fixed;inset:0;background:#0008;display:none;place-items:center;z-index:40}
+    .modal{width:min(520px,92vw);background:#0b1223;border:1px solid #1f2937;border-radius:16px;padding:18px;box-shadow:0 8px 40px #000}
+    .row{display:flex;gap:10px;}
+    .row>*{flex:1}
+    .field{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+    .field input,.field select{padding:10px 12px;border-radius:12px;border:1px solid #334155;background:#0a1221;color:#e5e7eb}
+
+    /* Cart */
+    .cart-panel{position:fixed;right:0;top:0;bottom:0;width:min(420px,95vw);background:#0b1223;border-left:1px solid #1f2937;box-shadow:0 10px 40px #000a;transform:translateX(100%);transition:transform .25s ease;z-index:50;display:flex;flex-direction:column}
+    .cart-panel.open{transform:none}
+    .cart-items{flex:1;overflow:auto;padding:14px}
+    .cart-footer{border-top:1px solid #1f2937;padding:14px;display:flex;gap:10px;align-items:center}
+    .cart-row{display:flex;align-items:center;justify-content:space-between;border:1px solid #1f2937;border-radius:12px;padding:10px;margin-bottom:10px}
+
+    /* Badges */
+    .badge{background:#052e16;color:#86efac;border:1px solid #14532d;padding:3px 8px;border-radius:999px;font-size:11px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container flex">
+      <!-- Search bar (kept similar to what you used) -->
+      <input id="searchInput" class="d-header-search-input search-color search" placeholder="Search for medicines, lab tests, doctors &amp; beauty" autocomplete="off" />
+      <button id="cartBtn" class="btn" aria-label="Open cart">🛒 <span id="cartCount" class="badge">0</span></button>
+      <div data-v-4cd5b1a2 class="position-relative profile-name" id="signinBtn" role="button" tabindex="0" title="Profile">
+        <img alt="Account" title="Profile" src="https://cdn.netmeds.tech/v2/plain-cake-860195/original/storefront/images/profileicon.svg" style="height:26px;vertical-align:middle"> <span class="muted">Sign In</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="toolbar">
+      <div class="muted">Showing <span id="shownCount">0</span> of <span id="totalCount">0</span> medicines</div>
+      <div class="muted">Demo OTP for login: <b>123456</b></div>
+    </div>
+    <div id="grid" class="grid" aria-live="polite"></div>
+  </main>
+
+  <!-- Sign In Modal -->
+  <div id="authBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-labelledby="authTitle">
+      <h2 id="authTitle">Sign in</h2>
+      <div class="field">
+        <label for="phoneInput">Phone number</label>
+        <input id="phoneInput" type="tel" inputmode="numeric" placeholder="Enter phone number" />
+      </div>
+      <button id="sendOtp" class="btn primary" data-test="send-otp">Send OTP</button>
+      <div id="otpArea" class="field hidden">
+        <label for="otpInput">Enter OTP (use 123456 in demo)</label>
+        <input id="otpInput" type="text" inputmode="numeric" maxlength="6" placeholder="******" />
+        <button id="verifyOtp" class="btn primary" data-test="verify-otp">Verify & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <aside id="cartPanel" class="cart-panel" aria-label="Shopping cart">
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="grow">
+        <div class="muted">Total</div>
+        <div id="cartTotal" class="price">₹0.00</div>
+      </div>
+      <button id="proceedToCheckout" class="btn primary">Proceed to Checkout</button>
+      <button id="closeCart" class="btn" aria-label="Close cart">Close</button>
+    </div>
+  </aside>
+
+  <!-- Checkout Modal -->
+  <div id="checkoutBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-labelledby="coTitle">
+      <h2 id="coTitle">Checkout</h2>
+      <div class="row">
+        <div class="field"><label for="addressName">Full name</label><input id="addressName" placeholder="Jane Doe"></div>
+        <div class="field"><label for="addressPhone">Phone</label><input id="addressPhone" placeholder="9999999999"></div>
+      </div>
+      <div class="field"><label for="addressLine1">Address line</label><input id="addressLine1" placeholder="221B Baker Street"></div>
+      <div class="row">
+        <div class="field"><label for="city">City</label><input id="city" placeholder="Chennai"></div>
+        <div class="field"><label for="zip">ZIP</label><input id="zip" placeholder="600001"></div>
+      </div>
+      <div class="field"><label for="payment">Payment</label>
+        <select id="payment">
+          <option value="cod">Cash on Delivery</option>
+          <option value="card">Card</option>
+          <option value="upi">UPI</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="placeOrder" class="btn primary">Place Order</button>
+        <button id="cancelCheckout" class="btn">Cancel</button>
+      </div>
+      <p id="orderSuccess" class="hidden" style="margin-top:10px;color:#86efac">✅ Order placed successfully! (Demo)</p>
+    </div>
+  </div>
+
+  <script>
+    // ---- Data generation (500 items) ----
+    const baseNames = [
+      "Dolo 650","Paracetamol 500","Azithromycin 500","Amoxicillin 250","Cetirizine 10mg","Metformin 500","Atorvastatin 10mg","Pantoprazole 40","Vitamin C 500","Zinc 50mg",
+      "Aspirin 75","Ibuprofen 200","Diclofenac 50","Losartan 50","Amlodipine 5","Omeprazole 20","Levocetirizine 5","Fexofenadine 120","Dapagliflozin 10","Gliclazide 80"
+    ];
+
+    const medicines = Array.from({length:500}, (_,i)=>{
+      const name = baseNames[i % baseNames.length] + (i<baseNames.length?"":" #"+(i+1));
+      const price = (50 + (i%50)*2 + (i%7)).toFixed(2);
+      const id = "MED" + String(i+1).padStart(4,'0');
+      return { id, name, price: Number(price) };
+    });
+
+    const grid = document.getElementById('grid');
+    const totalCount = document.getElementById('totalCount');
+    const shownCount = document.getElementById('shownCount');
+
+    function render(list){
+      grid.innerHTML = '';
+      list.forEach(item=>{
+        const card = document.createElement('div');
+        card.className='card';
+        card.setAttribute('data-id', item.id);
+        card.setAttribute('data-name', item.name);
+        card.innerHTML = `
+          <div class="pill">${item.id}</div>
+          <h3>${item.name}</h3>
+          <div class="price">₹${item.price.toFixed(2)}</div>
+          <div class="toolbar">
+            <button class="btn add-to-cart" data-test="add-to-cart" aria-label="Add ${item.name} to cart">Add to Cart</button>
+            <button class="btn buy-now" data-test="buy-now" aria-label="Buy ${item.name} now">Buy Now</button>
+          </div>`;
+        grid.appendChild(card);
+      });
+      totalCount.textContent = medicines.length;
+      shownCount.textContent = list.length;
+    }
+
+    render(medicines);
+
+    // ---- Search ----
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', ()=>{
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = q ? medicines.filter(m=>m.name.toLowerCase().includes(q)) : medicines;
+      render(filtered);
+    });
+
+    // ---- Auth flow ----
+    const authBackdrop = document.getElementById('authBackdrop');
+    const signinBtn = document.getElementById('signinBtn');
+    const sendOtp = document.getElementById('sendOtp');
+    const otpArea = document.getElementById('otpArea');
+    const otpInput = document.getElementById('otpInput');
+
+    signinBtn.addEventListener('click', ()=>{ authBackdrop.style.display='grid'; });
+    sendOtp.addEventListener('click', ()=>{ otpArea.classList.remove('hidden'); });
+    document.getElementById('verifyOtp').addEventListener('click', ()=>{
+      if(otpInput.value === '123456'){
+        authBackdrop.style.display='none';
+        signinBtn.querySelector('.muted').textContent = 'Signed In';
+        signinBtn.querySelector('.muted').style.color = '#86efac';
+      } else {
+        alert('Invalid OTP (use 123456 for demo)');
+      }
+    });
+    authBackdrop.addEventListener('click', (e)=>{ if(e.target===authBackdrop) authBackdrop.style.display='none'; });
+
+    // ---- Cart logic ----
+    const cartBtn = document.getElementById('cartBtn');
+    const cartPanel = document.getElementById('cartPanel');
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const cartCount = document.getElementById('cartCount');
+    const closeCart = document.getElementById('closeCart');
+    const proceedToCheckout = document.getElementById('proceedToCheckout');
+
+    const cart = new Map(); // id -> {info, qty}
+
+    function updateCartUI(){
+      cartItemsEl.innerHTML = '';
+      let total=0, count=0;
+      cart.forEach(({info, qty})=>{
+        total += info.price * qty; count += qty;
+        const row = document.createElement('div');
+        row.className='cart-row';
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:700">${info.name}</div>
+            <div class="muted">₹${info.price.toFixed(2)} × ${qty}</div>
+          </div>
+          <div class="row" style="gap:6px">
+            <button class="btn" data-action="dec" data-id="${info.id}">-</button>
+            <button class="btn" data-action="inc" data-id="${info.id}">+</button>
+            <button class="btn" data-action="rm" data-id="${info.id}" style="border-color:#ef4444;color:#fecaca">Remove</button>
+          </div>`;
+        cartItemsEl.appendChild(row);
+      });
+      cartTotalEl.textContent = `₹${total.toFixed(2)}`;
+      cartCount.textContent = count;
+    }
+
+    function addToCartByName(name){
+      const m = medicines.find(x=>x.name.toLowerCase()===name.toLowerCase() || x.name.toLowerCase().includes(name.toLowerCase()));
+      if(!m){ alert('Medicine not found: '+name); return; }
+      const entry = cart.get(m.id) || {info:m, qty:0};
+      entry.qty += 1; cart.set(m.id, entry); updateCartUI();
+    }
+
+    grid.addEventListener('click',(e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      const card = e.target.closest('.card'); const id = card?.dataset.id;
+      const info = medicines.find(x=>x.id===id);
+      if(btn.matches('.add-to-cart')){
+        const entry = cart.get(id) || {info, qty:0}; entry.qty++; cart.set(id, entry); updateCartUI();
+      }
+      if(btn.matches('.buy-now')){
+        const entry = cart.get(id) || {info, qty:0}; entry.qty++; cart.set(id, entry); updateCartUI();
+        cartPanel.classList.add('open');
+      }
+    });
+
+    cartItemsEl.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      const id = b.dataset.id; const entry = cart.get(id); if(!entry) return;
+      if(b.dataset.action==='inc'){ entry.qty++; }
+      if(b.dataset.action==='dec'){ entry.qty=Math.max(0,entry.qty-1); if(entry.qty===0) cart.delete(id); }
+      if(b.dataset.action==='rm'){ cart.delete(id); }
+      updateCartUI();
+    });
+
+    cartBtn.addEventListener('click', ()=> cartPanel.classList.add('open'));
+    closeCart.addEventListener('click', ()=> cartPanel.classList.remove('open'));
+
+    // ---- Checkout ----
+    const checkoutBackdrop = document.getElementById('checkoutBackdrop');
+    const cancelCheckout = document.getElementById('cancelCheckout');
+    const placeOrder = document.getElementById('placeOrder');
+    const orderSuccess = document.getElementById('orderSuccess');
+
+    proceedToCheckout.addEventListener('click', ()=>{
+      if(cart.size===0){ alert('Cart is empty'); return; }
+      checkoutBackdrop.style.display='grid';
+    });
+    cancelCheckout.addEventListener('click', ()=> checkoutBackdrop.style.display='none');
+    checkoutBackdrop.addEventListener('click', (e)=>{ if(e.target===checkoutBackdrop) checkoutBackdrop.style.display='none'; });
+
+    placeOrder.addEventListener('click', ()=>{
+      // Simple demo validation
+      const ok = ['addressName','addressPhone','addressLine1','city','zip'].every(id=>document.getElementById(id).value.trim());
+      if(!ok){ alert('Please fill shipping details'); return; }
+      orderSuccess.classList.remove('hidden');
+      setTimeout(()=>{
+        checkoutBackdrop.style.display='none'; cart.clear(); updateCartUI(); cartPanel.classList.remove('open');
+      }, 900);
+    });
+
+    // Expose helper for automation (optional)
+    window.__demo = { addToCartByName };
+  </script>
+</body>
+</html>
