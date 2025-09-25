@@ -1,0 +1,109 @@
+# LLaMA 3 8B Medical RAG System - GPU Optimized Requirements
+# RTX 5060 Ti + Ryzen 7 5700X configuration with CUDA acceleration
+
+# Core dependencies
+numpy>=1.21.0
+pandas>=1.3.0
+tqdm>=4.62.0
+python-dotenv>=0.19.0
+
+# PDF processing
+pypdf>=3.0.0
+
+# Machine learning and embeddings - GPU optimized
+# Note: Install PyTorch separately with CUDA support:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+transformers>=4.35.0
+sentence-transformers>=2.2.2
+accelerate>=0.24.0
+datasets>=2.14.0
+
+# GPU-specific optimizations
+nvidia-ml-py3>=7.352.0
+pynvml>=11.5.0
+
+# Vector database
+qdrant-client>=1.6.0
+
+# Sparse retrieval  
+rank-bm25>=0.2.2
+
+# Fast embeddings with GPU support
+fastembed>=0.2.0
+
+# HTTP requests for Ollama
+requests>=2.25.0
+
+# Terminal interface
+rich>=13.0.0
+
+# Command line interface
+typer>=0.9.0
+click>=8.0.0
+
+# Scientific computing with GPU support
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# GPU memory profiling
+gputil>=1.4.0
+psutil>=5.9.0
+
+# Development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+ipykernel>=6.0.0
+jupyter>=1.0.0
+notebook>=6.0.0
+
+# Optional visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Performance monitoring
+py3nvml>=0.2.7
+
+# Additional GPU libraries (optional but recommended)
+# cupy-cuda12x>=12.0.0  # Uncomment if you want GPU-accelerated NumPy
+# numba>=0.58.0  # Uncomment if you want JIT compilation with CUDA support
+
+# Memory optimization
+memory-profiler>=0.60.0
+pympler>=0.9
+
+# Async processing for better GPU utilization
+asyncio-mqtt>=0.11.0
+aiofiles>=23.0.0
+
+# Advanced ML features
+einops>=0.7.0
+safetensors>=0.4.0
+
+# Text processing
+nltk>=3.8.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Configuration management
+omegaconf>=2.3.0
+
+# Logging enhancements
+colorlog>=6.7.0
+
+# HTTP client improvements
+httpx>=0.25.0
+
+# Data processing utilities
+python-multipart>=0.0.6
+openpyxl>=3.1.0
+
+# Additional utilities
+pathlib2>=2.3.7
+dataclasses-json>=0.6.0
+
+# Optional: Uncomment for production deployment
+# uvicorn>=0.24.0
+# fastapi>=0.104.0
+# gunicorn>=21.2.0
