@@ -294,7 +294,7 @@ hospital-ai-system/
 ### Step 1: Clone & Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/hospital-ai-system.git
+git clone https://github.com/jianyang21/SynthCareAI/blob/main/hospital-ai-system.git
 cd hospital-ai-system
 
 # Create virtual environment
