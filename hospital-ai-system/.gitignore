@@ -1,0 +1,29 @@
+# ---- Environment & Secrets ----
+.env
+*.env.local
+
+# ---- Python ----
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ---- Patient Data (NEVER push) ----
+*.pdf
+uploads/
+data/
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Utility scripts with secrets ----
+update_patient.py
