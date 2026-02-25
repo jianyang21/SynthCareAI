@@ -448,11 +448,12 @@ Uses `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions) for vectorizing E
 
 ## � Future Roadmap
 
-### Phase 3 — Medicine Booking Site Integration
+### Phase 3 — Medicine Booking Site Integration & Decrease the latency in the LLM Responses 
 - [ ] Connect the Medicine Agent to the hospital's pharmacy website
 - [ ] Browser automation (Playwright) or API integration for real-time ordering
 - [ ] Live stock checking and price lookup from the pharmacy portal
 - [ ] Order tracking and delivery status updates via Telegram
+- [ ] Try to make the LLM Response more Faster
 
 ### Phase 4 — Advanced RAG System
 - [ ] Hybrid search: **BM25 + Dense Embeddings** for better retrieval accuracy
