@@ -7,6 +7,11 @@ from pydantic import BaseModel
 import re
 import os
 import random
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from pydantic import BaseModel
+
+# Import the logic from your new service file
+from backend.core_api.pdf_service import process_and_index_pdf, answer_pdf_question
 
 from backend.rag_agent.vector_store import (
     store_pdf_hybrid,
@@ -782,3 +787,40 @@ def chat(req: ChatRequest):
     brain.history = req.history
     result = brain.chat(req.message)
     return {"answer": result["answer"], "plan": result.get("plan", {})}
+
+
+
+class IndexQuestionRequest(BaseModel):
+    document_id: str
+    question: str
+
+@app.post("/records/build-page-index")
+def build_page_index(
+    patient_id: int = Form(...),
+    doctor_id: int = Form(None),
+    record_type: str = Form("general_report"),
+    file: UploadFile = File(...)
+):
+    try:
+        # Pass the spooled file object and filename to keep FastAPI decoupled from logic
+        result = process_and_index_pdf(
+            file_obj=file.file,
+            filename=file.filename,
+            patient_id=patient_id,
+            doctor_id=doctor_id,
+            record_type=record_type
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Indexing failed: {str(e)}")
+
+@app.post("/records/ask-index")
+def ask_indexed_pdf(req: IndexQuestionRequest):
+    try:
+        result = answer_pdf_question(
+            document_id=req.document_id,
+            question=req.question
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM synthesis failed: {str(e)}")

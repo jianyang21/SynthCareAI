@@ -18,10 +18,14 @@ import AdminMedicines       from './pages/admin/Medicines'
 import AdminChat            from './pages/admin/Chat'
 import AddPatient           from './pages/shared/AddPatient'
 
+// 1. Import your new shared page
+import SharedProfile        from './pages/shared/SharedProfile' 
+
 function Guard({ role, children }) {
   const { user, loading } = useAuth()
   if (loading) return <div className="min-h-screen bg-bg flex items-center justify-center text-muted text-sm">Loading…</div>
   if (!user) return <Navigate to="/login" replace />
+  // If no role is passed, this check is skipped, allowing any logged-in user through
   if (role && user.role !== role) return <Navigate to="/login" replace />
   return children
 }
@@ -38,6 +42,13 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+
+      {/* 2. Add the shared route here, using Guard without the role prop */}
+      <Route path="/sprofile" element={
+        <Guard>
+          <SharedProfile />
+        </Guard>
+      } />
 
       {/* Patient */}
       <Route path="/patient" element={<Guard role="patient"><PatientLayout /></Guard>}>
